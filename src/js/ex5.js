@@ -145,7 +145,7 @@ var movieLists = [
   _list = movieLists.concatMap(list => {
     return list.videos.concatMap(video => {
 			// NOTE
-			// We need to smallest box art and the middle interesting moment
+			// We need the smallest box art and the middle interesting moment
 			// in scope at the same time.
       return Array.zip(
 
