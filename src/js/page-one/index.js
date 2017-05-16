@@ -9,21 +9,16 @@ let form      = document.querySelector("form");
 Rx.Observable.fromEvent(form, "submit")
              .subscribe(ev => ev.preventDefault() );
 
-let keypresses = Rx.Observable.
-  fromEvent(searchBox, 'keypress').
-  throttleTime(500).
-  map(key =>
-    Rx.Observable.interval(1000)
-  ).switch();
 
+ let buttonClicks = Rx.Observable.fromEvent(button, "click");
 
-let click = Rx.Observable.fromEvent(button, "click");
+ buttonClicks.
+   take(1).
+   forEach(function(click) {
+     click.preventDefault();
+     alert("Button was clicked. Stopping traversal.");
+   });
 
-let result = keypresses.takeUntil(click);
-
-result.subscribe(e => console.log(e));
-
-
-// Sanity check
-let hw = new HelloWorld();
-hw.speak();
+ // Sanity check
+ let hw = new HelloWorld();
+ hw.speak();
