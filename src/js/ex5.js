@@ -144,9 +144,12 @@ var movieLists = [
 
   _list = movieLists.concatMap(list => {
     return list.videos.concatMap(video => {
+			// NOTE
+			// We need to smallest box art and the middle interesting moment
+			// in scope at the same time.
       return Array.zip(
 
-        // Will return an array of 1
+        // Array of length 1
         video.boxarts.reduce((acc, curr) => {
           if (acc.width * acc.height < curr.width * curr.height) {
             return acc;
@@ -156,7 +159,7 @@ var movieLists = [
           }
         }),
 
-        // Will return an array of 1
+        // Array of length 1
         video.interestingMoments.filter(m => {
           return m.type === "Middle";
         }),
