@@ -161,41 +161,39 @@ _results = lists.map(list => {
     name: list.name,
     videos:
       videos.
-        filter(video => {
-          return video.listId === list.id
-        }).
-          concatMap(video => {
+        filter(video => { return video.listId === list.id }).
+        concatMap(video => {
 
-            // NOTE
-            // We want a variable bound to both the bookmark
-            // and the boxart and we want them in scope at the
-            // same time. Array.zip is the right tool to use here.
-            return Array.zip(
-              // Array with 1 item
-              bookmarks.filter(bookmark => bookmark.videoId === video.id),
+          // NOTE
+          // We want a variable bound to both the bookmark
+          // and the boxart and we want them in scope at the
+          // same time. Array.zip is the right tool to use here.
+          return Array.zip(
+            // Array with 1 item
+            bookmarks.filter(bookmark => bookmark.videoId === video.id),
 
-              // Array with 1 item
-              boxarts.filter(boxart => boxart.videoId === video.id)
-                     .reduce((acc, curr) => {
-                       if (acc.width * acc.height < curr.width * curr.height) {
-                         return acc;
-                       }
-                       else {
-                         return curr;
-                       }
-                     }),
+            // Array with 1 item
+            boxarts.filter(boxart => boxart.videoId === video.id)
+                   .reduce((acc, curr) => {
+                     if (acc.width * acc.height < curr.width * curr.height) {
+                       return acc;
+                     }
+                     else {
+                       return curr;
+                     }
+                   }),
 
-              // Now the bookmark and boxart are in scope
-              (bookmark, boxart) => {
-                return {
-                  id:     video.id,
-                  title:  video.title,
-                  time:   bookmark.time,
-                  boxart: boxart.url
-                }
+            // Now the bookmark and boxart are in scope
+            (bookmark, boxart) => {
+              return {
+                id:     video.id,
+                title:  video.title,
+                time:   bookmark.time,
+                boxart: boxart.url
               }
-            )
-          })
+            }
+          )
+        })
   }
 })
 
