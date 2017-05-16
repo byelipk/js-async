@@ -6,15 +6,20 @@
   "version": "0.0.0",
   "scripts": {
     "build": "babel src -d lib",
+    "pack": "webpack",
     "test": "ava ./tests --verbose"
   },
   "devDependencies": {
     "ava": "^0.19.1",
     "babel-cli": "^6.24.1",
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
     "babel-plugin-syntax-async-functions": "^6.13.0",
-    "babel-preset-env": "^1.4.0"
+    "babel-preset-env": "^1.4.0",
+    "webpack": "^2.5.1"
   },
   "dependencies": {
-    "babel-polyfill": "^6.23.0"
+    "babel-polyfill": "^6.23.0",
+    "rxjs": "^5.4.0"
   }
 }
