@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "babel-polyfill": "^6.23.0",
+    "reqwest": "^2.0.5",
     "rxjs": "^5.4.0",
     "whatwg-fetch": "^2.0.3"
   }
