@@ -1,8 +1,9 @@
 let fetchJsonp = require("fetch-jsonp");
 let Observable = require("rxjs/Rx").Observable;
 
-let searchInput = document.querySelector("#inputSearch");
-let searchForm  = document.querySelector("form");
+const searchInput = document.querySelector("#inputSearch");
+const searchForm  = document.querySelector("form");
+const results     = document.querySelector("#results");
 
 let searchInputs = Observable.fromEvent(inputSearch, "input");
 
@@ -74,7 +75,16 @@ let searchResultsSet =
     // merge  {............["Ardvark", "abacus"]...["abacus"]}
     // concat {............["Ardvark", "abacus"].............["abacus"]}
     // switch {....................................["abacus"]}
-    .switch();
+    .switch()
+
+    .map(result => {
+      let listNode = document.createElement("p");
+      listNode.textContent = result;
+      return listNode;
+    });
 
 searchResultsSet
-  .forEach(result => console.log(result));
+  .forEach(result => {
+    results.innerHTML = "";
+    results.append(result);
+  });
