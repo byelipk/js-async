@@ -1,9 +1,9 @@
 let Rx = require("rxjs/Rx");
 
 let container = document.querySelector("#sprite-container");
-let button    = document.querySelector("button#drag");
+let sprite    = document.querySelector("#drag");
 
-let spriteMouseDowns          = Rx.Observable.fromEvent(button, "mousedown");
+let spriteMouseDowns          = Rx.Observable.fromEvent(sprite, "mousedown");
 let spriteContainerMouseMoves = Rx.Observable.fromEvent(container, "mousemove");
 let spriteContainerMouseUps   = Rx.Observable.fromEvent(container, "mouseup");
 
@@ -13,12 +13,19 @@ var spriteMouseDrags = spriteMouseDowns.
   concatMap((contactPoint) => {
     // Retrieve all mouse move events on container...
     return spriteContainerMouseMoves.
-      /// ...until a mouse up event occurs.
-      takeUntil(spriteContainerMouseUps);
+      // ...until a mouse up event occurs.
+      takeUntil(spriteContainerMouseUps).
+        map(movePoint => {
+          // Return a new object with translated point values
+          return {
+            pageX: movePoint.pageX - contactPoint.offsetX,
+            pageY: movePoint.pageY - contactPoint.offsetY
+          }
+        });
   });
 
 spriteMouseDrags.
   forEach((dragPoint) => {
-    button.style.left = dragPoint.pageX + "px";
-    button.style.top  = dragPoint.pageY + "px";
+    sprite.style.left = dragPoint.pageX + "px";
+    sprite.style.top  = dragPoint.pageY + "px";
   });

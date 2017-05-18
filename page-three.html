@@ -7,6 +7,22 @@
     <link rel="icon" href="/favicon.ico" />
 
     <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css">
+
+    <style media="screen">
+      #sprite-container {
+        height: 400px;
+        background-color: rgba(255,0,0,0.1);
+      }
+
+      .sprite {
+        height: 35px;
+        width: 50px;
+        position: absolute;
+        background-color: blue;
+        color: white;
+        cursor: pointer;
+      }
+    </style>
   </head>
   <body>
 
@@ -15,8 +31,10 @@
         <div class="col-sm-12">
           <h1 class="text-center pt-3 mb-3">Let's Move A Sprite</h1>
 
-          <div id="sprite-container" style="height: 400px; background-color: rgba(255,0,0,0.1);">
-            <button class="btn btn-primary" type="button" name="button" id="drag" style="position: absolute;">Drag Me</button>
+          <div id="sprite-container">
+            <div id="drag" class="sprite text-center">
+              Drag
+            </div>
           </div>
 
 
