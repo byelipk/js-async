@@ -55,18 +55,26 @@ function getWikiSearchResults(term) {
   });
 }
 
-searchInputs.
-  // Subscribe to the observable to get the data using forEach
-  forEach((press) => {
-    let searchTerm = press.target.value;
+// {....'a'.....'ab'..'abc'.....'abcd'...}
+let searchResultsSet =
+  searchInputs
+    // {.'a'..'b'.....'c'..d.......}
+    .throttle(ev => Observable.interval(20))
 
-    if (searchTerm) {
-      let observable = getWikiSearchResults(searchTerm);
+    // {........'b'.........'d'...}
+    .map((press) => {
+      return getWikiSearchResults(press.target.value);
+    })
 
-      observable.subscribe({
-        next:     (x) => console.log(x),
-        error:    (x) => console.error(`Something happened: ${x}`),
-        complete: ()  => console.log("Finished!"),
-      });
-    }
-});
+    // {
+    // ...........{......["Ardvark", "abacus"]}
+    // ................{........................["abacus"]}
+    // }
+    //
+    // merge  {............["Ardvark", "abacus"]...["abacus"]}
+    // concat {............["Ardvark", "abacus"].............["abacus"]}
+    // switch {....................................["abacus"]}
+    .switch();
+
+searchResultsSet
+  .forEach(result => console.log(result));
