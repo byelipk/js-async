@@ -1,20 +1,31 @@
-let fetchJsonp = require("fetch-jsonp");
-let Observable = require("rxjs/Rx").Observable;
+const fetchJsonp = require("fetch-jsonp");
+const Observable = require("rxjs/Rx").Observable;
+const Tether     = require("tether");
+const Velocity   = require("velocity-animate");
 
-const searchInput = document.querySelector("#inputSearch");
-const searchForm  = document.querySelector("form");
-const results     = document.querySelector("#results");
+function displayDropdown() {
+  resultsDropdown.style.display = "block";
 
-let searchInputs = Observable.fromEvent(inputSearch, "input");
+  resultsDropdown.style.width = `${searchInputField.offsetWidth}px`;
+
+  new Tether({
+    element: resultsDropdown,
+    target: searchInputField,
+    attachment: 'top middle',
+    targetAttachment: 'bottom middle'
+  });
+}
 
 function buildURL(term) {
   let apiURL = `https://en.wikipedia.org/w/api.php?`;
   let apiAction = `&action=opensearch`;
   let apiFormat = `&json`;
   let apiSearch = `&search=`;
+  let apiLimit  = `&limit=5`;
 
   return apiURL   +
         apiAction +
+        apiLimit  +
         apiFormat +
         apiSearch + encodeURIComponent(term);
 }
@@ -30,25 +41,15 @@ function getWikiSearchResults(term) {
 
     let cancelled = false;
 
-    const canceler = function canceler(func) {
-      if (!cancelled) {
-        return func();
-      }
-    }
-
     fetchJsonp(url)
-      .then(response => {
-        return canceler(() => response.json())
+      .then(resp => resp.json())
+      .then(json => {
+        if (!cancelled) {
+          observer.next(json[1]);
+          observer.complete();
+        }
       })
-      .then(json     => {
-        return canceler(() => observer.next(json[1]))
-      })
-      .catch(err     => {
-        return canceler(() => observer.error(err))
-      })
-      .then(()       => {
-        return canceler(() => observer.complete())
-      })
+      .catch(errv => observer.error())
 
     return function unsubscribe() {
       cancelled = true;
@@ -56,35 +57,82 @@ function getWikiSearchResults(term) {
   });
 }
 
-// {....'a'.....'ab'..'abc'.....'abcd'...}
-let searchResultsSet =
-  searchInputs
-    // {.'a'..'b'.....'c'..d.......}
-    .throttle(ev => Observable.interval(20))
 
-    // {........'b'.........'d'...}
-    .map((press) => {
-      return getWikiSearchResults(press.target.value);
+let searchToggleBtn       = document.querySelector("#search-toggle");
+let searchToggleBtnClicks = Observable.fromEvent(searchToggleBtn, "click");
+
+let searchInputField      = document.querySelector("#search-input");
+let searchInputKeypresses = Observable.fromEvent(searchInputField, "keypress");
+
+let resultsDropdown = document.querySelector("#results-dropdown");
+
+let searchResultSet =
+
+  searchInputKeypresses
+
+    // {.'a'.'b'..'c'...'d'...'e'.'f'.........
+    .throttleTime(20)
+
+    // {.'a'......................'f'.........
+    .map(press => {
+      return press.target.value;
     })
 
-    // {
-    // ...........{......["Ardvark", "abacus"]}
-    // ................{........................["abacus"]}
-    // }
+    // {..'af'....'af'....'afb'...............
+    .distinctUntilChanged()
+
+    // {..'af'............'afb'...............
+    .map(search => {
+      return getWikiSearchResults(search).retry(3);
+    })
+
+
+    // NOTE
+    // The three strategies for managing a collection of observables are:
     //
-    // merge  {............["Ardvark", "abacus"]...["abacus"]}
-    // concat {............["Ardvark", "abacus"].............["abacus"]}
-    // switch {....................................["abacus"]}
+    // merge   {...['ardvark', 'abacus']....['abacus']...
+    // concat  {...['ardvark', 'abacus']................['abacus']...
+    // switch  {............................['abacus']...
+
+    // {..
+    // ...{...['ardvark', 'abacus']}  (dispose)
+    // ............{...............['abacus']}
+    // }
     .switch()
 
-    .map(result => {
-      let listNode = document.createElement("p");
-      listNode.textContent = result;
-      return listNode;
-    });
+searchResultSet
+  // ........................['abacus'].....
+  .subscribe({
 
-searchResultsSet
-  .forEach(result => {
-    results.innerHTML = "";
-    results.append(result);
+    next: results => {
+      let nodes = results.map(result => {
+        let text = document.createTextNode(result);
+        let node = document.createElement("p");
+
+        node.appendChild(text);
+
+        return node;
+      });
+
+      while(resultsDropdown.firstChild) {
+        resultsDropdown.removeChild(resultsDropdown.firstChild);
+      }
+
+      nodes.forEach(node => resultsDropdown.appendChild(node));
+
+      displayDropdown()
+    },
+
+    error: err => console.error(err),
+
+    complete: () => console.log("DONE")
   });
+
+
+
+
+
+// NOTE
+// Sanity check
+// getWikiSearchResults("Terminator")
+//   .subscribe(results => console.log(results))

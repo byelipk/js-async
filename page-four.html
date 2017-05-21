@@ -6,53 +6,54 @@
 
     <link rel="icon" href="/favicon.ico" />
 
-    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css">
-
+    <link rel="stylesheet" href="/dist/css/bootstrap.min.css">
 
     <style media="screen">
-      body {
-        padding-top: 40px;
-        padding-bottom: 40px;
-        background-color: #eee;
+      html {
+        font-size: 14px;
       }
 
-      .form-signin {
-        max-width: 330px;
-        padding: 15px;
-        margin: 0 auto;
-      }
-      .form-signin .form-signin-heading,
-      .form-signin .checkbox {
-        margin-bottom: 10px;
-      }
-      .form-signin .checkbox {
-        font-weight: normal;
-      }
-      .form-signin .form-control {
-        position: relative;
-        height: auto;
-        -webkit-box-sizing: border-box;
-                box-sizing: border-box;
-        padding: 10px;
-        font-size: 16px;
-      }
-      .form-signin .form-control:focus {
-        z-index: 2;
-      }
-      .form-signin input[type="text"] {
-        margin-bottom: 20px;
-        /*margin-bottom: -1px;*/
-        /*border-bottom-right-radius: 0;*/
-        /*border-bottom-left-radius: 0;*/
-      }
-      .form-signin input[type="password"] {
-        margin-bottom: 10px;
-        border-top-left-radius: 0;
-        border-top-right-radius: 0;
+      @include media-breakpoint-up(sm) {
+        html {
+          font-size: 16px;
+        }
       }
 
-      .results {
-        background-color: white;
+      @include media-breakpoint-up(md) {
+        html {
+          font-size: 20px;
+        }
+      }
+
+      @include media-breakpoint-up(lg) {
+        html {
+          font-size: 28px;
+        }
+      }
+
+      #search-toggle {
+        display: none !important;
+      }
+
+      .results-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 1000;
+        display: none;
+        float: left;
+        min-width: 10rem;
+        padding: .5rem 0;
+        margin: .125rem 0 0;
+        font-size: 1rem;
+        color: #292b2c;
+        text-align: left;
+        list-style: none;
+        background-color: #fff;
+        -webkit-background-clip: padding-box;
+        background-clip: padding-box;
+        border: 1px solid rgba(0,0,0,.15);
+        border-radius: .25rem;
       }
     </style>
   </head>
@@ -60,34 +61,50 @@
 
     <div class="container">
       <div class="row">
-        <div class="col-sm-12">
+        <div class="col-sm-12 col-md-6 offset-md-3">
 
-          <form class="form-signin">
-            <h2 class="form-signin-heading">Make your search</h2>
-            <label for="inputSearch" class="sr-only">ex: Belgium</label>
-            <input type="text"
-                   id="inputSearch"
-                   class="form-control"
-                   placeholder="I'm waiting..."
-                   required=""
-                   autofocus="">
+          <br><br>
 
-            <button class="btn btn-lg btn-primary btn-block"
-                    type="submit">Search</button>
+          <h1 class="display-4 text-center">Wikipedia noW</h1>
+          <p class="lead text-center">Search the world's free encyclopedia</p>
+
+          <img src="/dist/images/logo2x.png"
+               class="img-fluid mx-auto d-block mb-3 w-50"
+               alt="Responsive image">
+
+          <br><br>
+
+          <!-- The search form -->
+          <form class="form">
+            <div class="row">
+
+              <div class="col-7 offset-1">
+                <input type="text"
+                       class="form-control form-control-lg"
+                       id="search-input"
+                       placeholder="Type something...">
+
+                <div id="results-dropdown"
+                     class="results-dropdown mt-1 p-3"></div>
+              </div>
+
+              <div class="col-2">
+                <button type="submit"
+                        class="btn btn-primary btn-lg">Search</button>
+              </div>
+
+            </div>
           </form>
 
+          <!-- Toggle search form -->
+          <button type="button"
+                  id="search-toggle"
+                  name="button"
+                  class="btn btn-lg btn-outline-primary mx-auto d-block mt-3">Search Wikipedia Now</button>
         </div>
-      </div>
-
-      <div class="row">
-        <div class="col-sm-4 offset-sm-4">
-          <div id="results" class="results p-3 m-3">
-            Search results will go here
-          </div>
-        </div>
-
       </div>
     </div>
+
 
 
   </body>

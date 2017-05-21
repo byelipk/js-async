@@ -1,0 +1,20 @@
+{
+  "orientation" : 0,
+  "updateDelay" : 0.3,
+  "cachedDeviceHeight" : 1800,
+  "contentScale" : 1,
+  "fullScreen" : false,
+  "cachedDeviceWidth" : 2880,
+  "sharedPrototype" : 0,
+  "propertyPanelToggleStates" : {
+
+  },
+  "deviceType" : "apple-macbook-pro",
+  "projectId" : "3875D110-8164-4127-A2E3-CC87F1F6F2C7",
+  "deviceOrientation" : 0,
+  "selectedHand" : "",
+  "foldedCodeRanges" : [
+
+  ],
+  "deviceScale" : "fit"
+}
