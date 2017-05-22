@@ -58,53 +58,95 @@ function getWikiSearchResults(term) {
 }
 
 
+// Event observables
 let searchToggleBtn       = document.querySelector("#search-toggle");
 let searchToggleBtnClicks = Observable.fromEvent(searchToggleBtn, "click");
 
 let searchInputField      = document.querySelector("#search-input");
 let searchInputKeypresses = Observable.fromEvent(searchInputField, "keypress");
 
+let searchForm = document.querySelector("#search-form");
 let resultsDropdown = document.querySelector("#results-dropdown");
+
+searchToggleBtnClicks
+  .subscribe({
+    next: x => {
+      searchToggleBtn.classList.remove("d-block");
+      searchForm.classList.add("d-block");
+      searchInputField.focus();
+    },
+    error: err => console.error(err),
+    complete: () => console.log('Done')
+  });
 
 let searchResultSet =
 
-  searchInputKeypresses
+  searchToggleBtnClicks
 
-    // {.'a'.'b'..'c'...'d'...'e'.'f'.........
-    .throttleTime(20)
+    .map(() => {
+      let closeBtn = document.querySelector("#close");
+      let closeBtnClicks = Observable.fromEvent(closeBtn, "click");
 
-    // {.'a'......................'f'.........
-    .map(press => {
-      return press.target.value;
-    })
+      closeBtnClicks
+        .subscribe({
+          next: x => {
+            searchToggleBtn.classList.add("d-block");
+            searchForm.classList.remove("d-block");
+          },
+          error: err => console.error(err),
+          complete: () => console.log('Comeplete')
+        });
 
-    // {..'af'....'af'....'afb'...............
-    .distinctUntilChanged()
+      // We only care about key presses when someone
+      // has clicked the search button.
+      return searchInputKeypresses
 
-    // {..'af'............'afb'...............
-    .map(search => {
-      return getWikiSearchResults(search).retry(3);
-    })
+        // {.'a'.'b'..'c'...'d'...'e'.'f'.........
+        .throttleTime(20)
+
+        // {.'a'......................'f'.........
+        .map(press => {
+          return press.target.value;
+        })
+
+        // {..'af'....'af'....'afb'...............
+        .distinctUntilChanged()
+
+        // .filter(search => search.trim() > 0)
+
+        // {..'af'............'afb'...............
+        .map(search => {
+          return getWikiSearchResults(search).retry(3);
+        })
 
 
-    // NOTE
-    // The three strategies for managing a collection of observables are:
-    //
-    // merge   {...['ardvark', 'abacus']....['abacus']...
-    // concat  {...['ardvark', 'abacus']................['abacus']...
-    // switch  {............................['abacus']...
+        // NOTE
+        // The three strategies for managing a collection of observables are:
+        //
+        // merge   {...['ardvark', 'abacus']....['abacus']...
+        // concat  {...['ardvark', 'abacus']................['abacus']...
+        // switch  {............................['abacus']...
 
-    // {..
-    // ...{...['ardvark', 'abacus']}  (dispose)
-    // ............{...............['abacus']}
-    // }
-    .switch()
+        // {..
+        // ...{...['ardvark', 'abacus']}  (dispose)
+        // ............{...............['abacus']}
+        // }
+        .switch()
+
+        .takeUntil(closeBtnClicks)
+
+    }).switch()
+
 
 searchResultSet
   // ........................['abacus'].....
   .subscribe({
 
     next: results => {
+      if (results.length === 0) {
+        console.log("Clear the result set!");
+      }
+
       let nodes = results.map(result => {
         let text = document.createTextNode(result);
         let node = document.createElement("p");
@@ -120,14 +162,13 @@ searchResultSet
 
       nodes.forEach(node => resultsDropdown.appendChild(node));
 
-      displayDropdown()
+      displayDropdown();
     },
 
     error: err => console.error(err),
 
     complete: () => console.log("DONE")
   });
-
 
 
 
