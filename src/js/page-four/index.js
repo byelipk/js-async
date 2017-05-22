@@ -5,8 +5,7 @@ const Velocity   = require("velocity-animate");
 
 function displayDropdown() {
   resultsDropdown.style.display = "block";
-
-  resultsDropdown.style.width = `${searchInputField.offsetWidth}px`;
+  resultsDropdown.style.width   = `${searchInputField.offsetWidth}px`;
 
   new Tether({
     element: resultsDropdown,
@@ -59,66 +58,55 @@ function getWikiSearchResults(term) {
 
 
 // Event observables
-let searchToggleBtn       = document.querySelector("#search-toggle");
-let searchToggleBtnClicks = Observable.fromEvent(searchToggleBtn, "click");
+let searchToggleBtn = document.querySelector("#search-toggle");
+let searchBtnClicks = Observable.fromEvent(searchToggleBtn, "click");
 
 let searchInputField      = document.querySelector("#search-input");
-let searchInputKeypresses = Observable.fromEvent(searchInputField, "keypress");
+let keypresses = Observable.fromEvent(searchInputField, "keypress");
 
 let searchForm = document.querySelector("#search-form");
 let resultsDropdown = document.querySelector("#results-dropdown");
 
-searchToggleBtnClicks
-  .subscribe({
-    next: x => {
-      searchToggleBtn.classList.remove("d-block");
-      searchForm.classList.add("d-block");
-      searchInputField.focus();
-    },
-    error: err => console.error(err),
-    complete: () => console.log('Done')
-  });
+let searchFormOpens =
+  searchBtnClicks
+    .do(
+      function next() {
+        // NOTE
+        // This code gets called when we forEach over the observable
+        searchToggleBtn.classList.remove("d-block");
+        searchForm.classList.add("d-block");
+        searchInputField.focus();
+      }
+    );
+
+
 
 let searchResultSet =
-
-  searchToggleBtnClicks
-
+  searchFormOpens
     .map(() => {
       let closeBtn = document.querySelector("#close");
       let closeBtnClicks = Observable.fromEvent(closeBtn, "click");
 
-      closeBtnClicks
-        .subscribe({
-          next: x => {
-            searchToggleBtn.classList.add("d-block");
-            searchForm.classList.remove("d-block");
-          },
-          error: err => console.error(err),
-          complete: () => console.log('Comeplete')
-        });
+      let searchFormCloses =
+        closeBtnClicks
+          .do(
+            function() {
+              searchToggleBtn.classList.add("d-block");
+              searchForm.classList.remove("d-block");
+            }
+          )
 
       // We only care about key presses when someone
       // has clicked the search button.
-      return searchInputKeypresses
-
+      return keypresses
         // {.'a'.'b'..'c'...'d'...'e'.'f'.........
         .throttleTime(20)
-
         // {.'a'......................'f'.........
-        .map(press => {
-          return press.target.value;
-        })
-
+        .map(press => press.target.value)
         // {..'af'....'af'....'afb'...............
         .distinctUntilChanged()
-
-        // .filter(search => search.trim() > 0)
-
         // {..'af'............'afb'...............
-        .map(search => {
-          return getWikiSearchResults(search).retry(3);
-        })
-
+        .map(search => getWikiSearchResults(search).retry(3))
 
         // NOTE
         // The three strategies for managing a collection of observables are:
@@ -133,15 +121,13 @@ let searchResultSet =
         // }
         .switch()
 
-        .takeUntil(closeBtnClicks)
+        .takeUntil(searchFormCloses)
 
     }).switch()
-
 
 searchResultSet
   // ........................['abacus'].....
   .subscribe({
-
     next: results => {
       if (results.length === 0) {
         console.log("Clear the result set!");
