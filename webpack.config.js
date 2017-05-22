@@ -5,7 +5,8 @@ module.exports = {
     "page-one": "./src/js/page-one/index.js",
     "page-two": "./src/js/page-two/index.js",
     "page-three": "./src/js/page-three/index.js",
-    "page-four": "./src/js/page-four/index.js"
+    "page-four": "./src/js/page-four/index.js",
+    "page-five": "./src/js/page-five/index.js"
   },
   output: {
     filename: '[name]/bundle.js',
