@@ -125,7 +125,8 @@ let searchFormOpens =
 
 
 let searchResultSet =
-  // Map an opened search form to search results
+  // Map an opened search form...
+
   searchFormOpens
     .map(() => {
       // DOM Elements
@@ -140,10 +141,10 @@ let searchResultSet =
           .do(() => {
             searchBtn.classList.add("d-block");
             searchForm.classList.remove("d-block");
+            removeChildrenFrom(resultsDropdown);
           });
 
-      // We only care about key presses when someone
-      // has clicked the search button.
+      // ...to search results
       return inputs
 
         // {.'a'.'b'..'c'...'d'...'e'.'f'.........
@@ -178,6 +179,9 @@ let searchResultSet =
         // }
         .switch()
 
+        // Map json data [term, results, descrs, urls]
+        .map(json => json[1])
+
         // Stop processing events when we close the form
         .takeUntil(searchFormCloses)
 
@@ -189,12 +193,7 @@ let searchResultSet =
 
     // .............['abacus'].....
     .subscribe({
-      next: data => {
-        let search       = data[0];
-        let results      = data[1];
-        let descriptions = data[2];
-        let urls         = data[3];
-
+      next: results => {
         removeChildrenFrom(resultsDropdown);
 
         if (!results || results.length === 0) {
@@ -229,8 +228,6 @@ let searchResultSet =
 
       complete: () => console.log("DONE")
     });
-
-
 
 inputFocuses
   .subscribe((evt) => {
@@ -300,7 +297,7 @@ dropdownKeypresses
         break;
 
       default:
-      
+
     }
 
     sibling.focus();
