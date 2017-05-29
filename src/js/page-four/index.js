@@ -103,7 +103,7 @@ function buildEmptySet() {
   element.classList.add("dropdown-item");
   element.appendChild(textNode);
 
-  return element;
+  return [element];
 }
 
 function buildResultSet(results) {
@@ -219,8 +219,11 @@ let searchResultSet =
 
     // Map the data into html elements
     .map(data => {
-      let results = zip(data[0], data[1]);
+      if (data[0] === undefined || data[1] === undefined) {
+        return buildEmptySet();
+      }
 
+      let results = zip(data[0], data[1]);
       if (!results || results.length === 0) {
         return buildEmptySet()
       }
@@ -311,7 +314,7 @@ dropdownKeypresses
 
       case "Enter":
         window.location = evt.target.getAttribute("href");
-        
+
         break;
 
       default:
