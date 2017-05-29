@@ -9,6 +9,8 @@ const UP    = 38;
 const RIGHT = 39;
 const DOWN  = 40;
 
+// Utility functions
+
 function createElementWithText(el, text) {
   let textNode = document.createTextNode(text);
   let element  = document.createElement(el);
@@ -76,19 +78,40 @@ function getWikiSearchResults(term) {
   });
 }
 
+function returnMap (shortest, arrs) {
+  return shortest.map(function (item, i) {
+    return arrs.map(function (arr) {
+      return arr[i];
+    });
+  });
+}
+
+function zip () {
+  var arrs = Array.prototype.splice.call(arguments, 0);
+
+  var shortest = arrs.reduce(function (a, b) {
+    return a.length < b.length ? a : b;
+  });
+
+  return returnMap(shortest, arrs);
+}
 
 // DOM Elements
-let searchBtn = document.querySelector("#search-toggle");
+let searchBtn         = document.querySelector("#search-toggle");
 let searchInputField  = document.querySelector("#search-input");
 let searchForm        = document.querySelector("#search-form");
 let resultsDropdown   = document.querySelector("#results-dropdown");
 
 // Observables
 let searchBtnClicks = Observable.fromEvent(searchBtn, "click");
-let keypresses      = Observable.fromEvent(searchInputField, "input");
-let blurs           = Observable.fromEvent(searchInputField, "blur");
-let focuses         = Observable.fromEvent(searchInputField, "focus");
+let inputs          = Observable.fromEvent(searchInputField, "input");
+let inputBlurs      = Observable.fromEvent(searchInputField, "blur");
+let inputFocuses    = Observable.fromEvent(searchInputField, "focus");
+let formBlurs       = Observable.fromEvent(searchForm, "blur");
+let formKeypresses  = Observable.fromEvent(searchForm, "keydown");
+let dropdownKeypresses = Observable.fromEvent(resultsDropdown, "keydown");
 
+// When the search form opens always do...
 let searchFormOpens =
   searchBtnClicks
     .do(() => {
@@ -97,6 +120,7 @@ let searchFormOpens =
       searchBtn.classList.remove("d-block");  // hide button
       searchForm.classList.add("d-block");    // show form
       searchInputField.focus();               // focus on input
+      searchInputField.setAttribute("aria-expanded", "true");
     });
 
 
@@ -110,6 +134,7 @@ let searchResultSet =
       // Observables
       let closeBtnClicks = Observable.fromEvent(closeBtn, "click");
 
+      // When the search form closes always do...
       let searchFormCloses =
         closeBtnClicks
           .do(() => {
@@ -119,15 +144,13 @@ let searchResultSet =
 
       // We only care about key presses when someone
       // has clicked the search button.
-      return keypresses
+      return inputs
 
         // {.'a'.'b'..'c'...'d'...'e'.'f'.........
         .throttleTime(20)
 
         // {.'a'......................'f'.........
-        .map(press => {
-          return press.target.value.trim();
-        })
+        .map(input => input.target.value.trim())
 
         // {..'af'....'af'....'afb'...............
         .distinctUntilChanged()
@@ -143,7 +166,7 @@ let searchResultSet =
         })
 
         // NOTE
-        // The three strategies for managing a collection of observables are:
+        // The three strategies for flattening a collection of observables are:
         //
         // merge   {...['ardvark', 'abacus']....['abacus']...
         // concat  {...['ardvark', 'abacus']................['abacus']...
@@ -155,46 +178,132 @@ let searchResultSet =
         // }
         .switch()
 
+        // Stop processing events when we close the form
         .takeUntil(searchFormCloses)
 
-    }).switch()
+    })
 
-searchResultSet
-  // ........................['abacus'].....
-  .subscribe({
-    next: data => {
-      let search       = data[0];
-      let results      = data[1];
-      let descriptions = data[2];
-      let urls         = data[3];
+    // {......
+    // .......{.....['abacus'].....
+    .switch()
 
-      if (results.length === 0) {
+    // .............['abacus'].....
+    .subscribe({
+      next: data => {
+        let search       = data[0];
+        let results      = data[1];
+        let descriptions = data[2];
+        let urls         = data[3];
+
         removeChildrenFrom(resultsDropdown);
 
-        let node = createElementWithText("p", "No results to display...");
+        if (!results || results.length === 0) {
+          let textNode = document.createTextNode("No results to display...");
+          let element  = document.createElement("p");
 
-        resultsDropdown.appendChild(node);
-      }
-      else {
-        removeChildrenFrom(resultsDropdown);
+          element.classList.add("dropdown-item");
+          element.appendChild(textNode);
 
-        let nodes = results.map(result => createElementWithText("p", result));
+          resultsDropdown.appendChild(element);
+        }
+        else {
+          let nodes = results.map(result => {
+            let textNode = document.createTextNode(result);
+            let element  = document.createElement("p");
 
-        nodes.forEach(node => resultsDropdown.appendChild(node));
-      }
+            element.classList.add("dropdown-item");
+            element.setAttribute("tabindex", "-1");
 
+            element.appendChild(textNode);
+
+            return element;
+          });
+
+          nodes.forEach(node => resultsDropdown.appendChild(node));
+        }
+
+        displayDropdown();
+      },
+
+      error: e => console.error(e),
+
+      complete: () => console.log("DONE")
+    });
+
+
+
+inputFocuses
+  .subscribe((evt) => {
+    if (resultsDropdown.firstElementChild) {
       displayDropdown();
-    },
-
-    error: e => console.error(e),
-
-    complete: () => console.log("DONE")
+    }
   });
 
-blurs.subscribe(hideDropdown);
+inputBlurs
+  .subscribe((evt) => {
+    if (!evt.relatedTarget ||
+        evt.relatedTarget.className !== "dropdown-item") {
+      hideDropdown();
+      searchInputField.setAttribute("aria-expanded", "false");
+    }
+  });
 
-focuses.subscribe(() => {
-  if (resultsDropdown.children.length > 0) {
-    displayDropdown();
-  }
-});
+formKeypresses
+  .subscribe((evt) => {
+
+    // evt.preventDefault();
+    evt.stopPropagation();
+
+    // If we have results...
+    if (resultsDropdown.offsetParent !== null) {
+
+      if (evt.key !== "ArrowDown" && evt.key !== "ArrowUp") return;
+
+      let activeElement = document.activeElement;
+
+      // programmatically apply focus to the new element,
+      // update the tabindex of the focused element to "0", and
+      // update the tabindex of the previously focused element to "-1".
+      if (searchInputField === activeElement) {
+        let child = resultsDropdown.firstChild;
+        child.focus();
+        child.setAttribute("tabindex", "0");
+        activeElement.setAttribute("tabindex", "-1");
+      }
+    }
+  });
+
+dropdownKeypresses
+  .subscribe(evt => {
+
+    evt.preventDefault();
+    evt.stopPropagation();
+
+    let sibling = null;
+    let prev    = document.activeElement;
+
+    switch (evt.key) {
+      case "ArrowDown":
+        sibling = evt.target.nextElementSibling;
+        if (!sibling) {
+          sibling = resultsDropdown.firstChild;
+        }
+
+        break;
+
+      case "ArrowUp":
+        sibling = evt.target.previousElementSibling;
+        if (!sibling) {
+          sibling = resultsDropdown.lastChild;
+        }
+
+        break;
+
+      default:
+      
+    }
+
+    sibling.focus();
+    sibling.setAttribute("tabindex", "0");
+    prev.setAttribute("tabindex", "-1");
+  });
