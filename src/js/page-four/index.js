@@ -96,6 +96,31 @@ function zip () {
   return returnMap(shortest, arrs);
 }
 
+function buildEmptySet() {
+  let textNode = document.createTextNode("No results to display...");
+  let element  = document.createElement("p");
+
+  element.classList.add("dropdown-item");
+  element.appendChild(textNode);
+
+  return element;
+}
+
+function buildResultSet(results) {
+  return results.map(result => {
+    let textNode = document.createTextNode(result[0]);
+    let element  = document.createElement("a");
+
+    element.classList.add("dropdown-item");
+    element.setAttribute("tabindex", "-1");
+    element.setAttribute("href", result[1]);
+
+    element.appendChild(textNode);
+
+    return element;
+  });
+}
+
 // DOM Elements
 let searchBtn         = document.querySelector("#search-toggle");
 let searchInputField  = document.querySelector("#search-input");
@@ -192,39 +217,23 @@ let searchResultSet =
     // .......{.....['abacus'].....
     .switch()
 
+    // Map the data into html elements
+    .map(data => {
+      let results = zip(data[0], data[1]);
+
+      if (!results || results.length === 0) {
+        return buildEmptySet()
+      }
+      else {
+        return buildResultSet(results);
+      }
+    })
+
     // .............['abacus'].....
     .subscribe({
-      next: data => {
-        let results = zip(data[0], data[1]);
-
+      next: results => {
         removeChildrenFrom(resultsDropdown);
-
-        if (!results || results.length === 0) {
-          let textNode = document.createTextNode("No results to display...");
-          let element  = document.createElement("p");
-
-          element.classList.add("dropdown-item");
-          element.appendChild(textNode);
-
-          resultsDropdown.appendChild(element);
-        }
-        else {
-          let nodes = results.map(result => {
-            let textNode = document.createTextNode(result[0]);
-            let element  = document.createElement("a");
-
-            element.classList.add("dropdown-item");
-            element.setAttribute("tabindex", "-1");
-            element.setAttribute("href", result[1]);
-
-            element.appendChild(textNode);
-
-            return element;
-          });
-
-          nodes.forEach(node => resultsDropdown.appendChild(node));
-        }
-
+        results.forEach(node => resultsDropdown.appendChild(node));
         displayDropdown();
       },
 
