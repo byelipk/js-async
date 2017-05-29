@@ -144,6 +144,7 @@ let searchResultSet =
             removeChildrenFrom(resultsDropdown);
           });
 
+
       // ...to search results
       return inputs
 
@@ -180,7 +181,7 @@ let searchResultSet =
         .switch()
 
         // Map json data [term, results, descrs, urls]
-        .map(json => json[1])
+        .zip(json => [json[1], json[3]])
 
         // Stop processing events when we close the form
         .takeUntil(searchFormCloses)
@@ -193,7 +194,9 @@ let searchResultSet =
 
     // .............['abacus'].....
     .subscribe({
-      next: results => {
+      next: data => {
+        let results = zip(data[0], data[1]);
+
         removeChildrenFrom(resultsDropdown);
 
         if (!results || results.length === 0) {
@@ -207,11 +210,12 @@ let searchResultSet =
         }
         else {
           let nodes = results.map(result => {
-            let textNode = document.createTextNode(result);
-            let element  = document.createElement("p");
+            let textNode = document.createTextNode(result[0]);
+            let element  = document.createElement("a");
 
             element.classList.add("dropdown-item");
             element.setAttribute("tabindex", "-1");
+            element.setAttribute("href", result[1]);
 
             element.appendChild(textNode);
 
@@ -300,7 +304,9 @@ dropdownKeypresses
 
     }
 
-    sibling.focus();
-    sibling.setAttribute("tabindex", "0");
-    prev.setAttribute("tabindex", "-1");
+    if (sibling && prev) {
+      sibling.focus();
+      sibling.setAttribute("tabindex", "0");
+      prev.setAttribute("tabindex", "-1");
+    }
   });
