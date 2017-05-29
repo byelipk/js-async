@@ -309,6 +309,11 @@ dropdownKeypresses
 
         break;
 
+      case "Enter":
+        window.location = evt.target.getAttribute("href");
+        
+        break;
+
       default:
 
     }
