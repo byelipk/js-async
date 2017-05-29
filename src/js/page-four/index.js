@@ -3,6 +3,12 @@ const Observable = require("rxjs/Rx").Observable;
 const Tether     = require("tether");
 const Velocity   = require("velocity-animate");
 
+// Arrow button key codes
+const LEFT  = 37;
+const UP    = 38;
+const RIGHT = 39;
+const DOWN  = 40;
+
 function createElementWithText(el, text) {
   let textNode = document.createTextNode(text);
   let element  = document.createElement(el);
@@ -32,8 +38,6 @@ function displayDropdown() {
 
 function hideDropdown() {
   resultsDropdown.style.display = "none";
-
-  removeChildrenFrom(resultsDropdown);
 }
 
 function buildURL(term) {
@@ -60,7 +64,7 @@ function getWikiSearchResults(term) {
       .then(resp => resp.json())
       .then(json => {
         if (!cancelled) {
-          observer.next(json[1]);
+          observer.next(json);
           observer.complete();
         }
       })
@@ -83,6 +87,7 @@ let resultsDropdown   = document.querySelector("#results-dropdown");
 let searchBtnClicks = Observable.fromEvent(searchBtn, "click");
 let keypresses      = Observable.fromEvent(searchInputField, "input");
 let blurs           = Observable.fromEvent(searchInputField, "blur");
+let focuses         = Observable.fromEvent(searchInputField, "focus");
 
 let searchFormOpens =
   searchBtnClicks
@@ -115,22 +120,24 @@ let searchResultSet =
       // We only care about key presses when someone
       // has clicked the search button.
       return keypresses
+
         // {.'a'.'b'..'c'...'d'...'e'.'f'.........
         .throttleTime(20)
+
         // {.'a'......................'f'.........
         .map(press => {
           return press.target.value.trim();
         })
+
         // {..'af'....'af'....'afb'...............
         .distinctUntilChanged()
+
         // {..'af'............'afb'...............
         .map(search => {
           if (search) {
-            console.log(`SEARCH: ${search}`);
             return getWikiSearchResults(search).retry(3);
           }
           else {
-            console.log("CLEAN")
             return Observable.of([]);
           }
         })
@@ -155,15 +162,18 @@ let searchResultSet =
 searchResultSet
   // ........................['abacus'].....
   .subscribe({
-    next: results => {
+    next: data => {
+      let search       = data[0];
+      let results      = data[1];
+      let descriptions = data[2];
+      let urls         = data[3];
+
       if (results.length === 0) {
         removeChildrenFrom(resultsDropdown);
 
         let node = createElementWithText("p", "No results to display...");
 
         resultsDropdown.appendChild(node);
-
-        displayDropdown();
       }
       else {
         removeChildrenFrom(resultsDropdown);
@@ -171,14 +181,20 @@ searchResultSet
         let nodes = results.map(result => createElementWithText("p", result));
 
         nodes.forEach(node => resultsDropdown.appendChild(node));
-
-        displayDropdown();
       }
+
+      displayDropdown();
     },
 
-    error: err => console.error(err),
+    error: e => console.error(e),
 
     complete: () => console.log("DONE")
   });
 
 blurs.subscribe(hideDropdown);
+
+focuses.subscribe(() => {
+  if (resultsDropdown.children.length > 0) {
+    displayDropdown();
+  }
+});
