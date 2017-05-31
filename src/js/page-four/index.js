@@ -121,6 +121,14 @@ function buildResultSet(results) {
   });
 }
 
+function handleKeyboardNavigation(target, active) {
+  target.focus();
+  target.setAttribute("tabindex", "0");
+  active.setAttribute("tabindex", "-1");
+
+  searchInputField.value = target.text;
+}
+
 // DOM Elements
 let searchBtn         = document.querySelector("#search-toggle");
 let searchInputField  = document.querySelector("#search-input");
@@ -278,10 +286,7 @@ formKeypresses
       // update the tabindex of the focused element to "0", and
       // update the tabindex of the previously focused element to "-1".
       if (searchInputField === activeElement) {
-        let child = resultsDropdown.firstChild;
-        child.focus();
-        child.setAttribute("tabindex", "0");
-        activeElement.setAttribute("tabindex", "-1");
+        handleKeyboardNavigation(resultsDropdown.firstChild, activeElement);
       }
     }
   });
@@ -293,7 +298,7 @@ dropdownKeypresses
     evt.stopPropagation();
 
     let sibling = null;
-    let prev    = document.activeElement;
+    let activeElement = document.activeElement;
 
     switch (evt.key) {
       case "ArrowDown":
@@ -321,9 +326,7 @@ dropdownKeypresses
 
     }
 
-    if (sibling && prev) {
-      sibling.focus();
-      sibling.setAttribute("tabindex", "0");
-      prev.setAttribute("tabindex", "-1");
+    if (sibling && activeElement) {
+      handleKeyboardNavigation(sibling, activeElement);
     }
   });
